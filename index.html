@@ -39,7 +39,8 @@
 
 <div id="scanSection" class="hidden">
   <h3 id="sectionTitle"></h3>
-  <input type="file" accept="image/*" onchange="handleImage(this)">
+ <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this)">
+<button class="btn" onclick="document.getElementById('cameraInput').click()">Skenovat</button>
   <div id="resultFields"></div>
   <button class="btn" onclick="saveToSheet()">Uložit</button>
   <div id="status"></div>
