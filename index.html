@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skener protokolů</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+    h1 { color: #007bff; }
+    .hidden { display: none; }
+    .btn { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; }
+    .btn:hover { background: #0056b3; }
+    input[type="file"] { margin: 10px 0; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>Skener protokolů</h1>
+
+<div id="loginSection">
+  <p>Zadejte svůj email:</p>
+  <input type="email" id="emailInput" placeholder="např. uzivatel@gmail.com">
+  <button class="btn" onclick="login()">Přihlásit se</button>
+</div>
+
+<div id="sectionSelect" class="hidden">
+  <p>Vyberte svůj úsek:</p>
+  <button class="btn" onclick="selectSection('Obkladačů')">Obkladačů</button>
+  <button class="btn" onclick="selectSection('Silikonování')">Silikonování</button>
+  <button class="btn" onclick="selectSection('Spárování')">Spárování</button>
+</div>
+
+<div id="scanSection" class="hidden">
+  <h3 id="sectionTitle"></h3>
+  <input type="file" accept="image/*" onchange="handleImage(this)">
+  <div id="resultFields"></div>
+  <button class="btn" onclick="saveToSheet()">Uložit</button>
+  <div id="status"></div>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Číslo zakázky</th>
+        <th>Číslo koupelny</th>
+        <th>Typ</th>
+        <th>L/R</th>
+        <th>Datum přidání</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
