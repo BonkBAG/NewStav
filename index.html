@@ -56,7 +56,6 @@
   </style>
 </head>
 <body>
-
 <h1>Skener protokolů</h1>
 
 <div id="loginSection">
@@ -93,9 +92,7 @@
     </thead>
     <tbody></tbody>
   </table>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</div><script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 <script>
   let userEmail = "";
   let selectedSection = "";
@@ -119,14 +116,17 @@
   async function handleImage(input) {
     const file = input.files[0];
     if (!file) return;
+
     const image = await file.arrayBuffer();
-    const result = await Tesseract.recognize(image, 'eng');
+    const result = await Tesseract.recognize(image, 'eng+ces');
     const text = result.data.text;
 
-    const zakazka = (text.match(/\b\d{8}\b/) || [""])[0];           // будь-яке 8-цифрове число
-    const koupelna = (text.match(/\/\s?(\d{2,4})/) || [,""])[1];    // число після "/"
-    const typ = (text.match(/\b\d\.\d+[A-Z]?\b/) || [""])[0];       // тип формату 1.3KL
-    const lr = (text.match(/\b[LR]\b/) || [""])[0];                 // L або R
+    alert("Rozpoznaný text:\n\n" + text); // показує весь текст
+
+    const zakazka = (text.match(/\b\d{8}\b/) || [""])[0];
+    const koupelna = (text.match(/\/\s?(\d{2,4})/) || [,""])[1];
+    const typ = (text.match(/\b\d\.\d+[A-Z]?\b/) || [""])[0];
+    const lr = (text.match(/\b[LR]\b/) || [""])[0];
 
     document.getElementById('resultFields').innerHTML = `
       <p><strong>Číslo zakázky:</strong> ${zakazka}</p>
@@ -136,9 +136,7 @@
     `;
 
     window.scanResult = { zakazka, koupelna, typ, lr };
-  }
-
-  async function saveToSheet() {
+  }  async function saveToSheet() {
     const { zakazka, koupelna, typ, lr } = window.scanResult || {};
     if (!zakazka || !koupelna) return alert("Některé údaje chybí!");
     const datum = new Date().toLocaleString();
