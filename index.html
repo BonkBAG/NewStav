@@ -39,16 +39,9 @@
       text-align: left;
     }
     th { background: #eee; }
-
     @media (max-width: 600px) {
-      body {
-        padding: 10px;
-        font-size: 16px;
-      }
-      h1 {
-        font-size: 22px;
-        text-align: center;
-      }
+      body { padding: 10px; font-size: 16px; }
+      h1 { font-size: 22px; text-align: center; }
       .btn {
         width: 100%;
         font-size: 18px;
@@ -58,9 +51,7 @@
         width: 100%;
         font-size: 16px;
       }
-      table {
-        font-size: 14px;
-      }
+      table { font-size: 14px; }
     }
   </style>
 </head>
@@ -107,7 +98,9 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 <script>
   let userEmail = "";
-  let selectedSection = "";  function login() {
+  let selectedSection = "";
+
+  function login() {
     const email = document.getElementById('emailInput').value;
     if (!email.includes('@')) return alert("Zadejte platný email");
     userEmail = email;
@@ -130,10 +123,10 @@
     const result = await Tesseract.recognize(image, 'eng');
     const text = result.data.text;
 
-    const zakazka = (text.match(/\b72 ?0?80 ?804\b/) || [""])[0].replace(/\s/g, '') || "";
-    const koupelna = (text.match(/\/\s?(\d{2,4})/) || [,""])[1] || "";
-    const typ = (text.match(/\b\d\.\d+[A-Z]?\b/) || [""])[0];
-    const lr = (text.match(/\b[L|R]\b/) || [""])[0];
+    const zakazka = (text.match(/\b\d{8}\b/) || [""])[0];           // будь-яке 8-цифрове число
+    const koupelna = (text.match(/\/\s?(\d{2,4})/) || [,""])[1];    // число після "/"
+    const typ = (text.match(/\b\d\.\d+[A-Z]?\b/) || [""])[0];       // тип формату 1.3KL
+    const lr = (text.match(/\b[LR]\b/) || [""])[0];                 // L або R
 
     document.getElementById('resultFields').innerHTML = `
       <p><strong>Číslo zakázky:</strong> ${zakazka}</p>
