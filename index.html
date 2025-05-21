@@ -8,7 +8,8 @@
     body {
       font-family: sans-serif;
       padding: 20px;
-      background: #f2f2f2;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
     }
     h1 { color: #007bff; }
     .hidden { display: none; }
@@ -92,7 +93,9 @@
     </thead>
     <tbody></tbody>
   </table>
-</div><script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 <script>
   let userEmail = "";
   let selectedSection = "";
@@ -116,17 +119,15 @@
   async function handleImage(input) {
     const file = input.files[0];
     if (!file) return;
-
     const image = await file.arrayBuffer();
     const result = await Tesseract.recognize(image, 'eng+ces');
     const text = result.data.text;
+    alert("Rozpoznaný text:\n\n" + text);
 
-    alert("Rozpoznaný text:\n\n" + text); // показує весь текст
-
-    const zakazka = (text.match(/\b\d{8}\b/) || [""])[0];
-    const koupelna = (text.match(/\/\s?(\d{2,4})/) || [,""])[1];
-    const typ = (text.match(/\b\d\.\d+[A-Z]?\b/) || [""])[0];
-    const lr = (text.match(/\b[LR]\b/) || [""])[0];
+    const zakazka = (text.match(/F\\s*([0-9 ]{8})/) || [,""])[1]?.replace(/\\s/g, '') || "";
+    const koupelna = (text.match(/\\/\\s?(\\d{2,4})/) || [,""])[1];
+    const typ = (text.match(/Typ\\s*([\\d\\.A-Z]+)/) || [,""])[1];
+    const lr = (text.match(/\\b[L|R]\\b/) || [""])[0];
 
     document.getElementById('resultFields').innerHTML = `
       <p><strong>Číslo zakázky:</strong> ${zakazka}</p>
@@ -134,9 +135,10 @@
       <p><strong>Typ:</strong> ${typ}</p>
       <p><strong>L/R:</strong> ${lr}</p>
     `;
-
     window.scanResult = { zakazka, koupelna, typ, lr };
-  }  async function saveToSheet() {
+  }
+
+  async function saveToSheet() {
     const { zakazka, koupelna, typ, lr } = window.scanResult || {};
     if (!zakazka || !koupelna) return alert("Některé údaje chybí!");
     const datum = new Date().toLocaleString();
