@@ -1,210 +1,226 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Skener protokolů</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: url('mozaika.jpg') no-repeat center center fixed;
+      background-image: url('background.jpg');
       background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
-    h1 {
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.92);
+      max-width: 420px;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    h2 {
+      text-align: center;
       color: #007bff;
-      font-size: 28px;
-      text-align: center;
-      text-shadow: 1px 1px 3px white;
+      margin-bottom: 20px;
     }
-    p {
-      font-size: 18px;
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input[type="email"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background-color: white;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 14px;
       text-align: center;
     }
+
+    th {
+      background-color: #f8f8f8;
+      font-weight: bold;
+    }
+
     .hidden {
       display: none;
     }
-    .btn {
-      padding: 10px 20px;
-      margin: 5px auto;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      display: block;
-      font-size: 18px;
+
+    @media screen and (max-width: 480px) {
+      .container {
+        margin: 10px;
+        padding: 15px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 10px;
+      }
+
+      th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
     }
-    .btn:hover { background: #0056b3; }
-    input[type="email"] {
-      display: block;
-      margin: 10px auto;
-      padding: 10px;
-      font-size: 18px;
-      width: 90%;
-      max-width: 400px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background: white;
-    }
-    #loginSection, #scanSection {
-      background: rgba(255,255,255,0.9);
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 600px;
-      margin: 30px auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-      background: white;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th { background: #eee; }
   </style>
 </head>
 <body>
+  <div class="container" id="loginContainer">
+    <h2>Skener protokolů</h2>
+    <label for="email">Zadejte svůj email:</label>
+    <input type="email" id="email" required>
+    <button onclick="login()">Přihlásit se</button>
+  </div>
 
-<div id="loginSection">
-  <h1>Skener protokolů</h1>
-  <p>Zadejte svůj email:</p>
-  <input type="email" id="emailInput" placeholder="např. jan@firma.cz">
-  <button class="btn" onclick="login()">Přihlásit se</button>
-</div>
+  <div class="container hidden" id="appContainer">
+    <h2>Úsek: <span id="sectionName">Obkladačů</span></h2>
+    <button onclick="scanPhoto()">Skenovat</button>
+    <button onclick="goBack()">Zpět</button>
+    <input type="file" accept="image/*" capture="environment" id="photoInput" style="display: none;" onchange="handleImage(this.files)">
+    <div id="scanResult" style="margin-top: 10px;">
+      <p><strong>Číslo zakázky:</strong> <span id="zakazka"></span></p>
+      <p><strong>Číslo koupelny:</strong> <span id="koupelna"></span></p>
+      <p><strong>Typ:</strong> <span id="typ"></span></p>
+      <p><strong>L/R:</strong> <span id="lr"></span></p>
+    </div>
+    <button onclick="saveToSheet()">Uložit</button>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Číslo zakázky</th>
+          <th>Číslo koupelny</th>
+          <th>Typ</th>
+          <th>L/R</th>
+          <th>Datum přidání</th>
+          <th>Stav</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<div id="sectionSelect" class="hidden">
-  <p>Vyberte svůj úsek:</p>
-  <button class="btn" onclick="selectSection('Obkladačů')">Obkladačů</button>
-  <button class="btn" onclick="selectSection('Silikonování')">Silikonování</button>
-  <button class="btn" onclick="selectSection('Spárování')">Spárování</button>
-</div>
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyDw9j8MEv3aoy2NBAwSlpVkCCdopEABT_5iMEeQZQUT3hbbb5HiehbYvtKfB04Etf2Ng/exec';
 
-<div id="scanSection" class="hidden">
-  <h1 id="sectionTitle"></h1>
-  <input id="cameraInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this)">
-  <button class="btn" onclick="document.getElementById('cameraInput').click()">Skenovat</button>
-  <button class="btn" onclick="goBack()">Zpět</button>
-  <div id="resultFields"></div>
-  <button class="btn" onclick="saveToSheet()">Uložit</button>
-  <div id="status"></div>
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th>Číslo zakázky</th>
-        <th>Číslo koupelny</th>
-        <th>Typ</th>
-        <th>L/R</th>
-        <th>Datum přidání</th>
-        <th>Статус</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div><script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
-<script>
-  let userEmail = "";
-  let selectedSection = "";
-
-  function login() {
-    const email = document.getElementById('emailInput').value.trim();
-    if (!email.includes('@')) {
-      alert("Zadejte platný email");
-      return;
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      if (email) {
+        localStorage.setItem('userEmail', email);
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('appContainer').classList.remove('hidden');
+      }
     }
-    userEmail = email;
-    localStorage.setItem('savedEmail', userEmail);
-    document.getElementById('loginSection').classList.add('hidden');
-    document.getElementById('sectionSelect').classList.remove('hidden');
-  }
 
-  function selectSection(name) {
-    selectedSection = name;
-    document.getElementById('sectionSelect').classList.add('hidden');
-    document.getElementById('scanSection').classList.remove('hidden');
-    document.getElementById('sectionTitle').innerText = "Úsek: " + name;
-  }
+    function scanPhoto() {
+      document.getElementById('photoInput').click();
+    }
 
-  function goBack() {
-    document.getElementById('scanSection').classList.add('hidden');
-    document.getElementById('sectionSelect').classList.remove('hidden');
-  }
+    function handleImage(files) {
+      if (!files.length) return;
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        // Тут ви вставите логіку OCR або розпізнавання тексту.
+        // Для демонстрації — вставимо випадкові значення:
+        document.getElementById('zakazka').innerText = '72080804';
+        document.getElementById('koupelna').innerText = '125';
+        document.getElementById('typ').innerText = '1.3KL';
+        document.getElementById('lr').innerText = 'L';
+      };
+      reader.readAsDataURL(file);
+    }
 
-  async function handleImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const image = await file.arrayBuffer();
-    const result = await Tesseract.recognize(image, 'eng+ces');
-    const text = result.data.text;
+    function saveToSheet() {
+      const zakazka = document.getElementById('zakazka').innerText;
+      const koupelna = document.getElementById('koupelna').innerText;
+      const typ = document.getElementById('typ').innerText;
+      const lr = document.getElementById('lr').innerText;
+      const email = localStorage.getItem('userEmail');
+      const date = new Date().toLocaleDateString();
 
-    alert("Rozpoznaný text:\n\n" + text);
+      if (!zakazka || !koupelna || !typ || !lr) {
+        alert("Не всі поля заповнені.");
+        return;
+      }
 
-    const zakazka = (text.match(/F\\s*([0-9 ]{8})/) || [,""])[1]?.replace(/\\s/g, '') || "";
-    const koupelna = (text.match(/\\b(\\d{3})\\b/) || [,""])[1];
-    const typ = (text.match(/Typ\\s*([\\d\\.A-Z]+)/) || [,""])[1];
-    const lr = (text.match(/\\b[L|R]\\b/) || [""])[0];
+      const row = [zakazka, koupelna, typ, lr, date, ''];
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify({ email: email, row: row }),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => {
+        addRowToTable(row);
+        alert("Успішно збережено!");
+      })
+      .catch(err => alert("Помилка: " + err));
+    }
 
-    document.getElementById('resultFields').innerHTML = `
-      <p><strong>Číslo zakázky:</strong> ${zakazka}</p>
-      <p><strong>Číslo koupelny:</strong> ${koupelna}</p>
-      <p><strong>Typ:</strong> ${typ}</p>
-      <p><strong>L/R:</strong> ${lr}</p>
-    `;
+    function addRowToTable(data) {
+      const tbody = document.getElementById('dataTable').querySelector('tbody');
+      const tr = document.createElement('tr');
+      data.forEach(item => {
+        const td = document.createElement('td');
+        td.textContent = item;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
 
-    window.scanResult = { zakazka, koupelna, typ, lr };
-  }  async function saveToSheet() {
-    const { zakazka, koupelna, typ, lr } = window.scanResult || {};
-    if (!zakazka || !koupelna) return alert("Některé údaje chybí!");
-    const datum = new Date().toLocaleString();
-    const row = [zakazka, koupelna, typ, lr, datum];
+    function goBack() {
+      document.getElementById('appContainer').classList.add('hidden');
+      document.getElementById('loginContainer').classList.remove('hidden');
+    }
 
-    const sheetURL = 'https://script.google.com/macros/s/AKfycbyDw9j8MEv3aoy2NBAwSlpVkCCdopEABT_5iMEeQZQUT3hbbb5HiehbYvtKfB04Etf2Ng/exec';
-    fetch(sheetURL, {
-      method: 'POST',
-      body: JSON.stringify({ row, email: userEmail }),
-    });
-
-    const table = document.querySelector('#dataTable tbody');
-    const newRow = document.createElement('tr');
-    row.forEach(cell => {
-      const td = document.createElement('td');
-      td.innerText = cell;
-      newRow.appendChild(td);
-    });
-
-    const markTd = document.createElement('td');
-    const markBtn = document.createElement('button');
-    markBtn.textContent = "Відмітити";
-    markBtn.style.background = "white";
-    markBtn.style.color = "black";
-    markBtn.style.border = "1px solid #ccc";
-    markBtn.style.padding = "5px 10px";
-    markBtn.style.borderRadius = "4px";
-    markBtn.onclick = function () {
-      markBtn.textContent = "Відмічена";
-      markBtn.style.background = "green";
-      markBtn.style.color = "white";
+    window.onload = () => {
+      const savedEmail = localStorage.getItem('userEmail');
+      if (savedEmail) {
+        document.getElementById('email').value = savedEmail;
+        login();
+      }
     };
-    markTd.appendChild(markBtn);
-    newRow.appendChild(markTd);
-    table.appendChild(newRow);
-    document.getElementById('status').innerText = "Data byla uložena.";
-  }
-
-  window.onload = function () {
-    const saved = localStorage.getItem('savedEmail');
-    if (saved) {
-      userEmail = saved;
-      document.getElementById('emailInput').value = saved;
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('sectionSelect').classList.remove('hidden');
-    }
-  }
-</script>
+  </script>
 </body>
 </html>
