@@ -122,85 +122,98 @@
   </div>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbx0bvlHj5QmABmkIDgrdG-Qlmiq_ziOHL0f1X7D1h7_1MnApR0qBoPMlpV05faVwOKqnw/exec';
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbx0bvlHj5QmABmkIDgrdG-Qlmiq_ziOHL0f1X7D1h7_1MnApR0qBoPMlpV05faVwOKqnw/exec';
 
-    function login() {
-      const email = document.getElementById('email').value.trim();
-      if (email) {
-        localStorage.setItem('userEmail', email);
-        document.getElementById('loginContainer').classList.add('hidden');
-        document.getElementById('sectionContainer').classList.remove('hidden');
-      }
-    }
-
-    function selectSection(name) {
-      document.getElementById('sectionContainer').classList.add('hidden');
-      document.getElementById('appContainer').classList.remove('hidden');
-      document.getElementById('sectionName').innerText = name;
-    }
-
-    function goBack() {
-      document.getElementById('appContainer').classList.add('hidden');
+  function login() {
+    const email = document.getElementById('email').value.trim();
+    if (email) {
+      localStorage.setItem('userEmail', email);
+      document.getElementById('loginContainer').classList.add('hidden');
       document.getElementById('sectionContainer').classList.remove('hidden');
     }
+  }
 
-    function scanPhoto() {
-      document.getElementById('photoInput').click();
-    }
+  function selectSection(name) {
+    document.getElementById('sectionContainer').classList.add('hidden');
+    document.getElementById('appContainer').classList.remove('hidden');
+    document.getElementById('sectionName').innerText = name;
+  }
 
-    function handleImage(files) {
-      if (!files.length) return;
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const imageData = event.target.result;
-        Tesseract.recognize(imageData, 'ces')
-          .then(({ data: { text } }) => {
-            const zakazka = (text.match(/72\s?080\s?(\d{3})/) || [])[1] || '';
-            const koupelna = (text.match(/\/(\d{3})/) || [])[1] || '';
-            const typ = (text.match(/Typ\s*([\w\.]+)/i) || [])[1] || '';
-            const lr = (text.match(/\b(L|R)\b/) || [])[1] || '';
-            document.getElementById('zakazka').innerText = zakazka;
-            document.getElementById('koupelna').innerText = koupelna;
-            document.getElementById('typ').innerText = typ;
-            document.getElementById('lr').innerText = lr;
-          })
-          .catch(error => alert('OCR Error: ' + error.message));
-      };
-      reader.readAsDataURL(file);
-    }
+  function goBack() {
+    document.getElementById('appContainer').classList.add('hidden');
+    document.getElementById('sectionContainer').classList.remove('hidden');
+  }
 
-    function saveToSheet() {
-      const zakazka = document.getElementById('zakazka').innerText;
-      const koupelna = document.getElementById('koupelna').innerText;
-      const typ = document.getElementById('typ').innerText;
-      const lr = document.getElementById('lr').innerText;
-      const email = localStorage.getItem('userEmail');
-      const datum = new Date().toLocaleDateString();
-      if (!zakazka || !koupelna || !typ || !lr) {
-        alert("Заповніть усі дані перед збереженням!");
-        return;
-      }
-      const row = [zakazka, koupelna, typ, lr, datum, ''];
-      fetch(scriptURL, {
-        method: 'POST',
-        body: JSON.stringify({ email: email, row: row }),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(res => res.json())
-      .then(() => alert('Uloženo!'))
-      .catch(() => alert('Не вдалося зберегти'));
-    }
+  function scanPhoto() {
+    document.getElementById('photoInput').click();
+  }
 
-    window.onload = () => {
-      const savedEmail = localStorage.getItem('userEmail');
-      if (savedEmail) {
-        document.getElementById('loginContainer').classList.add('hidden');
-        document.getElementById('sectionContainer').classList.remove('hidden');
-      } else {
-        document.getElementById('loginContainer').classList.remove('hidden');
-      }
+  function handleImage(files) {
+    if (!files.length) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const imageData = event.target.result;
+      Tesseract.recognize(imageData, 'ces')
+        .then(({ data: { text } }) => {
+          console.log('OCR result:', text);
+          parseText(text);
+        })
+        .catch(error => alert('OCR Error: ' + error.message));
     };
-  </script>
+    reader.readAsDataURL(file);
+  }
+
+  function parseText(text) {
+    const zakazkaMatch = text.match(/72[\s]?080[\s]?(\d{3})/);
+    const koupelnaMatch = text.match(/\/\s?(\d{3})/);
+    const typMatch = text.match(/Typ[:\s]*([A-Z0-9.\-]+)/i);
+    const lrMatch = text.match(/(?:Tür\s*LR|L\/R)[:\s]*([LR])/i);
+
+    const zakazka = zakazkaMatch ? '72 080 ' + zakazkaMatch[1] : '';
+    const koupelna = koupelnaMatch ? koupelnaMatch[1] : '';
+    const typ = typMatch ? typMatch[1] : '';
+    const lr = lrMatch ? lrMatch[1] : '';
+
+    document.getElementById('zakazka').innerText = zakazka;
+    document.getElementById('koupelna').innerText = koupelna;
+    document.getElementById('typ').innerText = typ;
+    document.getElementById('lr').innerText = lr;
+  }
+
+  function saveToSheet() {
+    const zakazka = document.getElementById('zakazka').innerText;
+    const koupelna = document.getElementById('koupelna').innerText;
+    const typ = document.getElementById('typ').innerText;
+    const lr = document.getElementById('lr').innerText;
+    const email = localStorage.getItem('userEmail');
+    const datum = new Date().toLocaleDateString();
+
+    if (!zakazka || !koupelna || !typ || !lr) {
+      alert("Заповніть усі дані перед збереженням!");
+      return;
+    }
+
+    const row = [zakazka, koupelna, typ, lr, datum, ''];
+    fetch(scriptURL, {
+      method: 'POST',
+      body: JSON.stringify({ email: email, row: row }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(() => alert('Uloženo!'))
+    .catch(() => alert('Не вдалося зберегти'));
+  }
+
+  window.onload = () => {
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) {
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('sectionContainer').classList.remove('hidden');
+    } else {
+      document.getElementById('loginContainer').classList.remove('hidden');
+    }
+  };
+</script>
 </body>
 </html>
