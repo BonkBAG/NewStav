@@ -164,22 +164,22 @@
     reader.readAsDataURL(file);
   }
 
-  function parseText(text) {
-    const zakazkaMatch = text.match(/72[\s]?080[\s]?(\d{3})/);
-    const koupelnaMatch = text.match(/\/\s?(\d{3})/);
-    const typMatch = text.match(/Typ[:\s]*([A-Z0-9.\-]+)/i);
-    const lrMatch = text.match(/(?:Tür\s*LR|L\/R)[:\s]*([LR])/i);
+ function parseText(text) {
+  const zakazkaMatch = text.match(/72[\s]?080[\s]?(\d{3})/);
+  const koupelnaMatch = text.match(/72\s?080\s?\d{3}\s?\/\s?(\d{3})/); // новий варіант
+  const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i);
+  const lrMatch = text.match(/(?:Tür\s*LR|L\/R)[:\s]*([LR])/i);
 
-    const zakazka = zakazkaMatch ? '72 080 ' + zakazkaMatch[1] : '';
-    const koupelna = koupelnaMatch ? koupelnaMatch[1] : '';
-    const typ = typMatch ? typMatch[1] : '';
-    const lr = lrMatch ? lrMatch[1] : '';
+  const zakazka = zakazkaMatch ? '72 080 ' + zakazkaMatch[1] : '';
+  const koupelna = koupelnaMatch ? koupelnaMatch[1] : '';
+  const typ = typMatch ? typMatch[1] : '';
+  const lr = lrMatch ? lrMatch[1] : '';
 
-    document.getElementById('zakazka').innerText = zakazka;
-    document.getElementById('koupelna').innerText = koupelna;
-    document.getElementById('typ').innerText = typ;
-    document.getElementById('lr').innerText = lr;
-  }
+  document.getElementById('zakazka').innerText = zakazka;
+  document.getElementById('koupelna').innerText = koupelna;
+  document.getElementById('typ').innerText = typ;
+  document.getElementById('lr').innerText = lr;
+}
 
   function saveToSheet() {
     const zakazka = document.getElementById('zakazka').innerText;
