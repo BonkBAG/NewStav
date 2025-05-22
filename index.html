@@ -66,6 +66,14 @@
       display: none;
     }
 
+    #highlight {
+      font-size: 18px;
+      font-weight: bold;
+      color: darkgreen;
+      text-align: center;
+      margin-top: 10px;
+    }
+
     @media screen and (max-width: 480px) {
       .container {
         margin: 10px;
@@ -101,6 +109,7 @@
 
   <div class="container hidden" id="appContainer">
     <h2>Úsek: <span id="sectionName"></span></h2>
+    <div id="highlight"></div>
     <button onclick="scanPhoto()">Skenovat</button>
     <button onclick="goBack()">Zpět</button>
     <input type="file" accept="image/*" capture="environment" id="photoInput" style="display: none;" onchange="handleImage(this.files)">
@@ -160,9 +169,9 @@ function handleImage(files) {
   if (!files.length) return;
   const reader = new FileReader();
   reader.onload = event => {
-    Tesseract.recognize(event.target.result, 'eng')
+    Tesseract.recognize(event.target.result, 'ces')
       .then(({ data: { text } }) => {
-        alert('Розпізнаний текст:\n' + text);
+        alert('Розпізнаний текст:\\n' + text);
         parseText(text);
       })
       .catch(err => alert('Помилка OCR: ' + err));
@@ -171,24 +180,36 @@ function handleImage(files) {
 }
 
 function parseText(text) {
-  document.getElementById('zakazka').innerText = (text.match(/\d{8}/) || [])[0] || 'N/A';
-  document.getElementById('koupelna').innerText = (text.match(/koupelny[:\- ]?(\d+)/i) || [])[1] || 'N/A';
-  document.getElementById('typ').innerText = (text.match(/Typ[:\- ]?([\w\.]+)/i) || [])[1] || 'N/A';
-  document.getElementById('lr').innerText = (text.match(/\b(L|R)\b/i) || [])[1] || 'N/A';
+  const zakazka = text.match(/72\\s?080\\s?(\\d{3})/)?.[1] || '';
+  const koupelna = text.match(/\\/(\\d{3})/)?.[1] || '';
+  const typ = text.match(/Typ\\s*([\\w\\.]+)/i)?.[1] || '';
+  const lr = text.match(/\\b(L|R)\\b/)?.[1] || '';
+
+  document.getElementById('zakazka').innerText = zakazka;
+  document.getElementById('koupelna').innerText = koupelna;
+  document.getElementById('typ').innerText = typ;
+  document.getElementById('lr').innerText = lr;
+
+  document.getElementById('highlight').innerText = zakazka ? `Zjištěná zakázka: ${zakazka}` : '';
 }
 
 function saveToSheet() {
-  const row = [
-    document.getElementById('zakazka').innerText,
-    document.getElementById('koupelna').innerText,
-    document.getElementById('typ').innerText,
-    document.getElementById('lr').innerText,
-    new Date().toLocaleDateString(),
-    ''
-  ];
+  const zakazka = document.getElementById('zakazka').innerText;
+  const koupelna = document.getElementById('koupelna').innerText;
+  const typ = document.getElementById('typ').innerText;
+  const lr = document.getElementById('lr').innerText;
+  const email = localStorage.getItem('userEmail');
+  const datum = new Date().toLocaleDateString();
+
+  if (!zakazka || !koupelna || !typ || !lr) {
+    alert("Заповніть усі дані перед збереженням!");
+    return;
+  }
+
+  const row = [zakazka, koupelna, typ, lr, datum, ''];
   fetch(scriptURL, {
     method: 'POST',
-    body: JSON.stringify({ email: localStorage.getItem('userEmail'), row }),
+    body: JSON.stringify({ email: email, row: row }),
     headers: { 'Content-Type': 'application/json' }
   })
   .then(res => res.json())
