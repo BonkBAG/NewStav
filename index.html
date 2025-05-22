@@ -31,14 +31,16 @@
       margin-bottom: 20px;
     }
 
-    label {
+    label, select {
       display: block;
       margin-top: 10px;
       font-weight: bold;
+      width: 100%;
     }
 
     input[type="email"],
-    input[type="file"] {
+    input[type="file"],
+    select {
       width: 100%;
       padding: 10px;
       margin-top: 4px;
@@ -114,8 +116,15 @@
     <button onclick="login()">Přihlásit se</button>
   </div>
 
+  <div class="container hidden" id="sectionContainer">
+    <h2>Vyberte úsek:</h2>
+    <button onclick="selectSection('Obkladačů')">Obkladačů</button>
+    <button onclick="selectSection('Silikonování')">Silikonování</button>
+    <button onclick="selectSection('Spárování')">Spárování</button>
+  </div>
+
   <div class="container hidden" id="appContainer">
-    <h2>Úsek: <span id="sectionName">Obkladačů</span></h2>
+    <h2>Úsek: <span id="sectionName"></span></h2>
     <button onclick="scanPhoto()">Skenovat</button>
     <button onclick="goBack()">Zpět</button>
     <input type="file" accept="image/*" capture="environment" id="photoInput" style="display: none;" onchange="handleImage(this.files)">
@@ -129,12 +138,12 @@
     <table id="dataTable">
       <thead>
         <tr>
-          <th>Číslo zakázky</th>
-          <th>Číslo koupelny</th>
+          <th>Zakázka</th>
+          <th>Koupelna</th>
           <th>Typ</th>
           <th>L/R</th>
-          <th>Datum přidání</th>
-          <th>Stav</th>
+          <th>Datum</th>
+          <th>Статус</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -149,8 +158,19 @@
       if (email) {
         localStorage.setItem('userEmail', email);
         document.getElementById('loginContainer').classList.add('hidden');
-        document.getElementById('appContainer').classList.remove('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
       }
+    }
+
+    function selectSection(name) {
+      document.getElementById('sectionContainer').classList.add('hidden');
+      document.getElementById('appContainer').classList.remove('hidden');
+      document.getElementById('sectionName').innerText = name;
+    }
+
+    function goBack() {
+      document.getElementById('appContainer').classList.add('hidden');
+      document.getElementById('sectionContainer').classList.remove('hidden');
     }
 
     function scanPhoto() {
@@ -161,9 +181,8 @@
       if (!files.length) return;
       const file = files[0];
       const reader = new FileReader();
-      reader.onload = function (e) {
-        // Тут ви вставите логіку OCR або розпізнавання тексту.
-        // Для демонстрації — вставимо випадкові значення:
+      reader.onload = function () {
+        // Тут буде OCR. Поки вставимо фіктивні дані:
         document.getElementById('zakazka').innerText = '72080804';
         document.getElementById('koupelna').innerText = '125';
         document.getElementById('typ').innerText = '1.3KL';
@@ -178,14 +197,14 @@
       const typ = document.getElementById('typ').innerText;
       const lr = document.getElementById('lr').innerText;
       const email = localStorage.getItem('userEmail');
-      const date = new Date().toLocaleDateString();
+      const datum = new Date().toLocaleDateString();
 
       if (!zakazka || !koupelna || !typ || !lr) {
         alert("Не всі поля заповнені.");
         return;
       }
 
-      const row = [zakazka, koupelna, typ, lr, date, ''];
+      const row = [zakazka, koupelna, typ, lr, datum, ''];
       fetch(scriptURL, {
         method: 'POST',
         body: JSON.stringify({ email: email, row: row }),
@@ -199,26 +218,39 @@
     }
 
     function addRowToTable(data) {
-      const tbody = document.getElementById('dataTable').querySelector('tbody');
+      const tbody = document.querySelector('#dataTable tbody');
       const tr = document.createElement('tr');
-      data.forEach(item => {
+      data.forEach(cell => {
         const td = document.createElement('td');
-        td.textContent = item;
+        td.textContent = cell;
         tr.appendChild(td);
       });
+
+      const markTd = document.createElement('td');
+      const markBtn = document.createElement('button');
+      markBtn.textContent = "Відмітити";
+      markBtn.style.background = "white";
+      markBtn.style.color = "black";
+      markBtn.style.border = "1px solid #ccc";
+      markBtn.style.padding = "5px 10px";
+      markBtn.style.borderRadius = "4px";
+      markBtn.onclick = function () {
+        markBtn.textContent = "Відмічена";
+        markBtn.style.background = "green";
+        markBtn.style.color = "white";
+      };
+      markTd.appendChild(markBtn);
+      tr.appendChild(markTd);
+
       tbody.appendChild(tr);
     }
 
-    function goBack() {
-      document.getElementById('appContainer').classList.add('hidden');
-      document.getElementById('loginContainer').classList.remove('hidden');
-    }
-
     window.onload = () => {
-      const savedEmail = localStorage.getItem('userEmail');
-      if (savedEmail) {
-        document.getElementById('email').value = savedEmail;
-        login();
+      const saved = localStorage.getItem('userEmail');
+      if (saved) {
+        document.getElementById('email').value = saved;
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
       }
     };
   </script>
