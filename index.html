@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Skener protokolů</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <style>
     body {
@@ -15,7 +15,6 @@
       font-family: Arial, sans-serif;
       color: #fff;
     }
-
     .container {
       background-color: rgba(0, 0, 0, 0.65);
       max-width: 420px;
@@ -24,13 +23,11 @@
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
-
     h2 {
       text-align: center;
       color: #00d9ff;
       margin-bottom: 20px;
     }
-
     input[type="email"], button {
       width: 100%;
       padding: 12px;
@@ -39,42 +36,34 @@
       font-size: 16px;
       border: none;
     }
-
     input[type="email"] {
       background-color: #222;
       color: #fff;
     }
-
     button {
       background-color: #00aaff;
       color: white;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #008fcc;
     }
-
     .hidden {
       display: none;
     }
-
     table {
       width: 100%;
       margin-top: 15px;
       border-collapse: collapse;
     }
-
     th, td {
       padding: 10px;
       border: 1px solid #555;
       font-size: 14px;
     }
-
     th {
       background-color: rgba(255, 255, 255, 0.1);
     }
-
     #highlight {
       font-size: 18px;
       font-weight: bold;
@@ -82,18 +71,15 @@
       text-align: center;
       margin: 15px 0;
     }
-
     @media screen and (max-width: 480px) {
       .container {
         margin: 10px;
         padding: 15px;
       }
-
       input[type="email"], button {
         font-size: 14px;
         padding: 10px;
       }
-
       th, td {
         font-size: 12px;
         padding: 6px;
@@ -104,7 +90,7 @@
 <body>
   <div class="container hidden" id="loginContainer">
     <h2>Skener protokolů</h2>
-    <input type="email" id="email" placeholder="Zadejte svůj email">
+    <input type="email" id="email" placeholder="Zadejte svůj email" />
     <button onclick="login()">Přihlásit se</button>
   </div>
 
@@ -120,7 +106,7 @@
     <div id="highlight"></div>
     <button onclick="scanPhoto()">Skenovat</button>
     <button onclick="goBack()">Zpět</button>
-    <input type="file" accept="image/*" capture="environment" id="photoInput" style="display: none;" onchange="handleImage(this.files)">
+    <input type="file" accept="image/*" capture="environment" id="photoInput" style="display: none;" onchange="handleImage(this.files)" />
     <div id="scanResult">
       <p><strong>Číslo zakázky:</strong> <span id="zakazka"></span></p>
       <p><strong>Číslo koupelny:</strong> <span id="koupelna"></span></p>
@@ -143,102 +129,102 @@
     </table>
   </div>
 
-<script>
-const scriptURL = 'https://script.google.com/macros/s/AKfycbx0bvlHj5QmABmkIDgrdG-Qlmiq_ziOHL0f1X7D1h7_1MnApR0qBoPMlpV05faVwOKqnw/exec';
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx0bvlHj5QmABmkIDgrdG-Qlmiq_ziOHL0f1X7D1h7_1MnApR0qBoPMlpV05faVwOKqnw/exec';
 
-function login() {
-  const email = document.getElementById('email').value.trim();
-  if (email) {
-    localStorage.setItem('userEmail', email);
-    document.getElementById('loginContainer').classList.add('hidden');
-    document.getElementById('sectionContainer').classList.remove('hidden');
-  }
-}
-
-function selectSection(name) {
-  document.getElementById('sectionContainer').classList.add('hidden');
-  document.getElementById('appContainer').classList.remove('hidden');
-  document.getElementById('sectionName').innerText = name;
-}
-
-function goBack() {
-  document.getElementById('appContainer').classList.add('hidden');
-  document.getElementById('sectionContainer').classList.remove('hidden');
-}
-
-function scanPhoto() {
-  document.getElementById('photoInput').click();
-}
-
-function handleImage(files) {
-  if (!files.length) return;
-  const file = files[0];
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const imageData = event.target.result;
-    if (!imageData) {
-      alert('Файл не вдалося прочитати.');
-      return;
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      if (email) {
+        localStorage.setItem('userEmail', email);
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
+      }
     }
-    Tesseract.recognize(imageData, 'ces')
-      .then(({ data: { text } }) => {
-        alert('Розпізнаний текст:\n' + text);
-        parseText(text);
+
+    function selectSection(name) {
+      document.getElementById('sectionContainer').classList.add('hidden');
+      document.getElementById('appContainer').classList.remove('hidden');
+      document.getElementById('sectionName').innerText = name;
+    }
+
+    function goBack() {
+      document.getElementById('appContainer').classList.add('hidden');
+      document.getElementById('sectionContainer').classList.remove('hidden');
+    }
+
+    function scanPhoto() {
+      document.getElementById('photoInput').click();
+    }
+
+    function handleImage(files) {
+      if (!files.length) return;
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const imageData = event.target.result;
+        if (!imageData) {
+          alert('Файл не вдалося прочитати.');
+          return;
+        }
+        Tesseract.recognize(imageData, 'ces')
+          .then(({ data: { text } }) => {
+            alert('Розпізнаний текст:\n' + text);
+            parseText(text);
+          })
+          .catch(error => {
+            console.error(error);
+            alert('Помилка OCR: ' + error.message);
+          });
+      };
+      reader.onerror = function () {
+        alert('Помилка читання файлу.');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function parseText(text) {
+      const zakazka = text.match(/72\s?080\s?(\d{3})/)?.[1] || '';
+      const koupelna = text.match(/\/(\d{3})/)?.[1] || '';
+      const typ = text.match(/Typ\s*([\w\.]+)/i)?.[1] || '';
+      const lr = text.match(/\b(L|R)\b/)?.[1] || '';
+      document.getElementById('zakazka').innerText = zakazka;
+      document.getElementById('koupelna').innerText = koupelna;
+      document.getElementById('typ').innerText = typ;
+      document.getElementById('lr').innerText = lr;
+      document.getElementById('highlight').innerText = zakazka ? `Zjištěná zakázka: ${zakazka}` : '';
+    }
+
+    function saveToSheet() {
+      const zakazka = document.getElementById('zakazka').innerText;
+      const koupelna = document.getElementById('koupelna').innerText;
+      const typ = document.getElementById('typ').innerText;
+      const lr = document.getElementById('lr').innerText;
+      const email = localStorage.getItem('userEmail');
+      const datum = new Date().toLocaleDateString();
+      if (!zakazka || !koupelna || !typ || !lr) {
+        alert("Заповніть усі дані перед збереженням!");
+        return;
+      }
+      const row = [zakazka, koupelna, typ, lr, datum, ''];
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify({ email: email, row: row }),
+        headers: { 'Content-Type': 'application/json' }
       })
-      .catch(error => {
-        console.error(error);
-        alert('Помилка OCR: ' + error.message);
-      });
-  };
-  reader.onerror = function () {
-    alert('Помилка читання файлу.');
-  };
-  reader.readAsDataURL(file);
-}
+      .then(res => res.json())
+      .then(() => alert('Uloženo!'))
+      .catch(() => alert('Не вдалося зберегти'));
+    }
 
-function parseText(text) {
-  const zakazka = text.match(/72\\s?080\\s?(\\d{3})/)?.[1] || '';
-  const koupelna = text.match(/\\/(\\d{3})/)?.[1] || '';
-  const typ = text.match(/Typ\\s*([\\w\\.]+)/i)?.[1] || '';
-  const lr = text.match(/\\b(L|R)\\b/)?.[1] || '';
-  document.getElementById('zakazka').innerText = zakazka;
-  document.getElementById('koupelna').innerText = koupelna;
-  document.getElementById('typ').innerText = typ;
-  document.getElementById('lr').innerText = lr;
-  document.getElementById('highlight').innerText = zakazka ? `Zjištěná zakázka: ${zakazka}` : '';
-}
-
-function saveToSheet() {
-  const zakazka = document.getElementById('zakazka').innerText;
-  const koupelna = document.getElementById('koupelna').innerText;
-  const typ = document.getElementById('typ').innerText;
-  const lr = document.getElementById('lr').innerText;
-  const email = localStorage.getItem('userEmail');
-  const datum = new Date().toLocaleDateString();
-  if (!zakazka || !koupelna || !typ || !lr) {
-    alert("Заповніть усі дані перед збереженням!");
-    return;
-  }
-  const row = [zakazka, koupelna, typ, lr, datum, ''];
-  fetch(scriptURL, {
-    method: 'POST',
-    body: JSON.stringify({ email: email, row: row }),
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(res => res.json())
-  .then(() => alert('Uloženo!'))
-  .catch(() => alert('Не вдалося зберегти'));
-}
-
-window.onload = () => {
-  const savedEmail = localStorage.getItem('userEmail');
-  if (savedEmail) {
-    document.getElementById('loginContainer').classList.add('hidden');
-    document.getElementById('sectionContainer').classList.remove('hidden');
-  } else {
-    document.getElementById('loginContainer').classList.remove('hidden');
-  }
-};
-</script>
+    window.onload = () => {
+      const savedEmail = localStorage.getItem('userEmail');
+      if (savedEmail) {
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('loginContainer').classList.remove('hidden');
+      }
+    };
+  </script>
 </body>
 </html>
