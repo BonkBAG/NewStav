@@ -16,7 +16,6 @@
       margin: 0;
       padding: 0;
     }
-
     .container {
       background-color: rgba(255, 255, 255, 0.92);
       max-width: 420px;
@@ -25,47 +24,39 @@
       border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
-
     h2 {
       text-align: center;
       color: #007bff;
       margin-bottom: 20px;
     }
-
     input[type="email"], button {
       width: 100%;
       padding: 10px;
       border-radius: 6px;
       margin-bottom: 10px;
     }
-
     button {
       background-color: #007bff;
       color: white;
       border: none;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #0056b3;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
     }
-
     th, td {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
     }
-
     .hidden {
       display: none;
     }
-
     #highlight {
       font-size: 18px;
       font-weight: bold;
@@ -73,7 +64,6 @@
       text-align: center;
       margin-top: 10px;
     }
-
     @media screen and (max-width: 480px) {
       .container {
         margin: 10px;
@@ -94,7 +84,7 @@
   </style>
 </head>
 <body>
-  <div class="container" id="loginContainer">
+  <div class="container hidden" id="loginContainer">
     <h2>Skener protokolů</h2>
     <input type="email" id="email" placeholder="Zadejte svůj email" required>
     <button onclick="login()">Přihlásit se</button>
@@ -113,16 +103,13 @@
     <button onclick="scanPhoto()">Skenovat</button>
     <button onclick="goBack()">Zpět</button>
     <input type="file" accept="image/*" capture="environment" id="photoInput" style="display: none;" onchange="handleImage(this.files)">
-
     <div id="scanResult">
       <p><strong>Číslo zakázky:</strong> <span id="zakazka"></span></p>
       <p><strong>Číslo koupelny:</strong> <span id="koupelna"></span></p>
       <p><strong>Typ:</strong> <span id="typ"></span></p>
       <p><strong>L/R:</strong> <span id="lr"></span></p>
     </div>
-
     <button onclick="saveToSheet()">Uložit</button>
-
     <table id="dataTable">
       <thead>
         <tr>
@@ -167,16 +154,32 @@ function scanPhoto() {
 
 function handleImage(files) {
   if (!files.length) return;
+  const file = files[0];
   const reader = new FileReader();
-  reader.onload = event => {
-    Tesseract.recognize(event.target.result, 'ces')
+
+  reader.onload = function (event) {
+    const imageData = event.target.result;
+    if (!imageData) {
+      alert('Файл не вдалося прочитати.');
+      return;
+    }
+
+    Tesseract.recognize(imageData, 'ces')
       .then(({ data: { text } }) => {
-        alert('Розпізнаний текст:\\n' + text);
+        alert('Розпізнаний текст:\n' + text);
         parseText(text);
       })
-      .catch(err => alert('Помилка OCR: ' + err));
+      .catch(error => {
+        console.error(error);
+        alert('Помилка OCR: ' + error.message);
+      });
   };
-  reader.readAsDataURL(files[0]);
+
+  reader.onerror = function () {
+    alert('Помилка читання файлу.');
+  };
+
+  reader.readAsDataURL(file);
 }
 
 function parseText(text) {
@@ -216,6 +219,16 @@ function saveToSheet() {
   .then(() => alert('Uloženo!'))
   .catch(() => alert('Не вдалося зберегти'));
 }
+
+window.onload = () => {
+  const savedEmail = localStorage.getItem('userEmail');
+  if (savedEmail) {
+    document.getElementById('loginContainer').classList.add('hidden');
+    document.getElementById('sectionContainer').classList.remove('hidden');
+  } else {
+    document.getElementById('loginContainer').classList.remove('hidden');
+  }
+};
 </script>
 </body>
 </html>
