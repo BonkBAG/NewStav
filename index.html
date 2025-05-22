@@ -163,17 +163,25 @@
     };
     reader.readAsDataURL(file);
   }
+function parseText(text) {
+  console.log("OCR raw text:", text);
 
- function parseText(text) {
-  const zakazkaMatch = text.match(/72[\s]?080[\s]?(\d{3})/);
-  const koupelnaMatch = text.match(/72\s?080\s?\d{3}\s?\/\s?(\d{3})/); // новий варіант
-  const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i);
-  const lrMatch = text.match(/(?:Tür\s*LR|L\/R)[:\s]*([LR])/i);
+  // Rozpoznání zakázky: 72 080 xxx
+  const zakazkaMatch = text.match(/72[\s]?[0O]{1}80[\s]?(\d{3})/);
 
-  const zakazka = zakazkaMatch ? '72 080 ' + zakazkaMatch[1] : '';
+  // Koupelna: čísло після zakázky через /
+  const koupelnaMatch = text.match(/\/\s?(\d{3})/);
+
+  // Typ: перед словом "Typ" або після
+  const typMatch = text.match(/Typ[:\s]*([\w\d.,-]+)/i);
+
+  // L/R: у полі Tür LR або окремо як просто L або R
+  const lrMatch = text.match(/\b([LR])\b(?!\/)/i);
+
+  const zakazka = zakazkaMatch ? `72 080 ${zakazkaMatch[1]}` : '';
   const koupelna = koupelnaMatch ? koupelnaMatch[1] : '';
   const typ = typMatch ? typMatch[1] : '';
-  const lr = lrMatch ? lrMatch[1] : '';
+  const lr = lrMatch ? lrMatch[1].toUpperCase() : '';
 
   document.getElementById('zakazka').innerText = zakazka;
   document.getElementById('koupelna').innerText = koupelna;
