@@ -65,6 +65,24 @@
     .hidden {
       display: none;
     }
+
+    @media screen and (max-width: 480px) {
+      .container {
+        margin: 10px;
+        padding: 15px;
+      }
+      input[type="email"], button {
+        font-size: 14px;
+        padding: 10px;
+      }
+      table, th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -142,18 +160,21 @@ function handleImage(files) {
   if (!files.length) return;
   const reader = new FileReader();
   reader.onload = event => {
-    Tesseract.recognize(event.target.result, 'eng').then(({ data: { text } }) => {
-      parseText(text);
-    });
+    Tesseract.recognize(event.target.result, 'eng')
+      .then(({ data: { text } }) => {
+        alert('Розпізнаний текст:\n' + text);
+        parseText(text);
+      })
+      .catch(err => alert('Помилка OCR: ' + err));
   };
   reader.readAsDataURL(files[0]);
 }
 
 function parseText(text) {
-  document.getElementById('zakazka').innerText = text.match(/\d{8}/) || 'N/A';
-  document.getElementById('koupelna').innerText = text.match(/koupelny[:\- ]?(\d+)/i)?.[1] || 'N/A';
-  document.getElementById('typ').innerText = text.match(/Typ[:\- ]?([\w\.]+)/i)?.[1] || 'N/A';
-  document.getElementById('lr').innerText = text.match(/\b(L|R)\b/i)?.[1] || 'N/A';
+  document.getElementById('zakazka').innerText = (text.match(/\d{8}/) || [])[0] || 'N/A';
+  document.getElementById('koupelna').innerText = (text.match(/koupelny[:\- ]?(\d+)/i) || [])[1] || 'N/A';
+  document.getElementById('typ').innerText = (text.match(/Typ[:\- ]?([\w\.]+)/i) || [])[1] || 'N/A';
+  document.getElementById('lr').innerText = (text.match(/\b(L|R)\b/i) || [])[1] || 'N/A';
 }
 
 function saveToSheet() {
@@ -171,7 +192,8 @@ function saveToSheet() {
     headers: { 'Content-Type': 'application/json' }
   })
   .then(res => res.json())
-  .then(() => alert('Uloženo!'));
+  .then(() => alert('Uloženo!'))
+  .catch(() => alert('Не вдалося зберегти'));
 }
 </script>
 </body>
