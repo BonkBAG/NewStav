@@ -192,7 +192,6 @@
 
         Tesseract.recognize(processedImage, 'ces')
           .then(({ data: { text } }) => {
-            document.getElementById('ocrTextOutput').value = text;
             parseText(text);
           })
           .catch(error => alert("OCR Error: " + error.message));
