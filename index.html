@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -155,24 +156,28 @@
       const reader = new FileReader();
       reader.onload = function (event) {
         const imageData = event.target.result;
-        Tesseract.recognize(imageData, 'ces')
+        console.log("Сканую зображення...");
+        Tesseract.recognize(imageData, 'eng')
           .then(({ data: { text } }) => {
-            console.log("OCR text:", text);
+            console.log("OCR text:\n", text);
             parseText(text);
           })
-          .catch(error => alert("OCR Error: " + error.message));
+          .catch(error => {
+            console.error("OCR Error:", error);
+            alert("OCR Error: " + error.message);
+          });
       };
       reader.readAsDataURL(file);
     }
 
     function parseText(text) {
-      const zakazkaMatch = text.match(/72\s?0[80O]{2}\s?(\d{3})/); // 72 080 804
-      const koupelnaMatch = text.match(/\/\s?(\d{3})/);            // /207
-      const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i);     // Typ 2.4KR
-      const lrMatch = text.match(/\b([LR])\b/i);                   // L або R
+      const zakazkaMatch = text.match(/72\s?080\s?\d{3}/);             
+      const koupelnaMatch = text.match(/\/\s?(\d{3})|(\b\d{3}\b)/);     
+      const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i) || text.match(/\b(\d{1,2}\.\d+[A-Z]?)\b/); 
+      const lrMatch = text.match(/\b([LR])\b/i);                        
 
-      const zakazka = zakazkaMatch ? `72 080 ${zakazkaMatch[1]}` : '';
-      const koupelna = koupelnaMatch ? koupelnaMatch[1] : '';
+      const zakazka = zakazkaMatch ? zakazkaMatch[0].replace(/\s+/g, ' ') : '';
+      const koupelna = koupelnaMatch ? (koupelnaMatch[1] || koupelnaMatch[2]) : '';
       const typ = typMatch ? typMatch[1] : '';
       const lr = lrMatch ? lrMatch[1].toUpperCase() : '';
 
@@ -196,14 +201,29 @@
       }
 
       const row = [zakazka, koupelna, typ, lr, datum, ''];
+
       fetch(scriptURL, {
         method: 'POST',
         body: JSON.stringify({ email, row }),
         headers: { 'Content-Type': 'application/json' }
       })
       .then(res => res.json())
-      .then(() => alert("Успішно збережено!"))
+      .then(() => {
+        alert("Успішно збережено!");
+        addRowToTable(row); // додати в HTML-таблицю
+      })
       .catch(() => alert("Помилка під час збереження"));
+    }
+
+    function addRowToTable(row) {
+      const table = document.querySelector('#dataTable tbody');
+      const newRow = document.createElement('tr');
+      row.forEach(cell => {
+        const td = document.createElement('td');
+        td.textContent = cell;
+        newRow.appendChild(td);
+      });
+      table.appendChild(newRow);
     }
 
     window.onload = () => {
