@@ -107,6 +107,7 @@
       <p><strong>L/R:</strong> <span id="lr"></span></p>
     </div>
     <button onclick="saveToSheet()">Uložit</button>
+    <button onclick="clearFields()">Vymazat</button>
     <table id="dataTable">
       <thead>
         <tr>
@@ -120,6 +121,11 @@
       </thead>
       <tbody></tbody>
     </table>
+  </div>
+
+  <div class="container">
+    <h2>OCR výstup</h2>
+    <textarea id="ocrTextOutput" rows="8" style="width:100%; font-size: 13px; background:#111; color:#0f0; padding:10px; border-radius:8px;" readonly></textarea>
   </div>
 
   <script>
@@ -155,10 +161,9 @@
       const reader = new FileReader();
       reader.onload = function (event) {
         const imageData = event.target.result;
-        console.log("Сканую зображення...");
         Tesseract.recognize(imageData, 'eng')
           .then(({ data: { text } }) => {
-            console.log("OCR text:\n", text);
+            document.getElementById('ocrTextOutput').value = text;
             parseText(text);
           })
           .catch(error => {
@@ -173,8 +178,6 @@
       return text
         .replace(/[|]/g, '1')
         .replace(/[Oo]/g, '0')
-        .replace(/[“”]/g, '"')
-        .replace(/[\u2018\u2019]/g, "'")
         .replace(/[\r\n]+/g, ' ')
         .replace(/\s{2,}/g, ' ')
         .trim();
@@ -182,11 +185,10 @@
 
     function parseText(text) {
       text = cleanText(text);
-      console.log("Очищений текст:\n", text);
 
       const zakazkaMatch = text.match(/72\s?080\s?\d{3}/);             
       const koupelnaMatch = text.match(/\/\s?(\d{3})|(\b\d{3}\b)/);     
-      const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i) || text.match(/\b(\d{1,2}\.\d+[A-Z]?)\b/); 
+      const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i) || text.match(/\b(\d{1,2}\.\d+[A-Z]*)\b/); 
       const lrMatch = text.match(/\b([LR])\b/i);                        
 
       const zakazka = zakazkaMatch ? zakazkaMatch[0].replace(/\s+/g, ' ') : '';
@@ -222,8 +224,9 @@
       })
       .then(res => res.json())
       .then(() => {
-        alert("Успішно збережено!");
+        alert("Uspěšně uloženo!");
         addRowToTable(row);
+        clearFields();
       })
       .catch(() => alert("Помилка під час збереження"));
     }
@@ -237,6 +240,14 @@
         newRow.appendChild(td);
       });
       table.appendChild(newRow);
+    }
+
+    function clearFields() {
+      document.getElementById('zakazka').innerText = '';
+      document.getElementById('koupelna').innerText = '';
+      document.getElementById('typ').innerText = '';
+      document.getElementById('lr').innerText = '';
+      document.getElementById('ocrTextOutput').value = '';
     }
 
     window.onload = () => {
