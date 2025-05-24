@@ -127,7 +127,164 @@
     <h2>OCR výstup</h2>
     <textarea id="ocrTextOutput" rows="8" style="width:100%; font-size: 13px; background:#111; color:#0f0; padding:10px; border-radius:8px;" readonly></textarea>
   </div>
+<!-- усі твої стилі та HTML блоки залишаються — ключові зміни в <script> -->
+<!-- Додаємо canvas для обробки зображення (можна сховати) -->
+<canvas id="imageCanvas" style="display:none;"></canvas>
 
+<script>
+  const scriptURL = 'https://script.google.com/macros/s/...'; // твоя URL
+
+  function login() {
+    const email = document.getElementById('email').value.trim();
+    if (email) {
+      localStorage.setItem('userEmail', email);
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('sectionContainer').classList.remove('hidden');
+    }
+  }
+
+  function selectSection(name) {
+    document.getElementById('sectionContainer').classList.add('hidden');
+    document.getElementById('appContainer').classList.remove('hidden');
+    document.getElementById('sectionName').innerText = name;
+  }
+
+  function goBack() {
+    document.getElementById('appContainer').classList.add('hidden');
+    document.getElementById('sectionContainer').classList.remove('hidden');
+  }
+
+  function scanPhoto() {
+    document.getElementById('photoInput').click();
+  }
+
+  function handleImage(files) {
+    if (!files.length) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const img = new Image();
+      img.onload = function () {
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Чорно-білий фільтр з контрастом
+        for (let i = 0; i < data.length; i += 4) {
+          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          const value = avg > 140 ? 255 : 0;
+          data[i] = data[i + 1] = data[i + 2] = value;
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        const processedImage = canvas.toDataURL('image/png');
+
+        Tesseract.recognize(processedImage, 'eng')
+          .then(({ data: { text } }) => {
+            document.getElementById('ocrTextOutput').value = text;
+            parseText(text);
+          })
+          .catch(error => {
+            console.error("OCR Error:", error);
+            alert("OCR Error: " + error.message);
+          });
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function cleanText(text) {
+    return text
+      .replace(/[|]/g, '1')
+      .replace(/[Oo]/g, '0')
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  function parseText(text) {
+    text = cleanText(text);
+
+    const zakazkaMatch = text.match(/72\s?080\s?\d{3}/);
+    const koupelnaMatch = text.match(/\/\s?(\d{3})|(\b\d{3}\b)/);
+    const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i) || text.match(/\b(\d{1,2}\.\d+[A-Z]*)\b/);
+    const lrMatch = text.match(/\b([LR])\b/i);
+
+    const zakazka = zakazkaMatch ? zakazkaMatch[0].replace(/\s+/g, ' ') : '';
+    const koupelna = koupelnaMatch ? (koupelnaMatch[1] || koupelnaMatch[2]) : '';
+    const typ = typMatch ? typMatch[1].replace(/[^A-Z0-9.]/gi, '') : '';
+    const lr = lrMatch ? lrMatch[1].toUpperCase() : '';
+
+    document.getElementById('zakazka').innerText = zakazka;
+    document.getElementById('koupelna').innerText = koupelna;
+    document.getElementById('typ').innerText = typ;
+    document.getElementById('lr').innerText = lr;
+  }
+
+  function saveToSheet() {
+    const zakazka = document.getElementById('zakazka').innerText;
+    const koupelna = document.getElementById('koupelna').innerText;
+    const typ = document.getElementById('typ').innerText;
+    const lr = document.getElementById('lr').innerText;
+    const email = localStorage.getItem('userEmail');
+    const datum = new Date().toLocaleDateString();
+
+    if (!zakazka || !koupelna || !typ || !lr) {
+      alert("Заповніть усі поля перед збереженням!");
+      return;
+    }
+
+    const row = [zakazka, koupelna, typ, lr, datum, ''];
+
+    fetch(scriptURL, {
+      method: 'POST',
+      body: JSON.stringify({ email, row }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(() => {
+      alert("Успішно збережено!");
+      addRowToTable(row);
+      clearFields();
+    })
+    .catch(() => alert("Помилка під час збереження"));
+  }
+
+  function addRowToTable(row) {
+    const table = document.querySelector('#dataTable tbody');
+    const newRow = document.createElement('tr');
+    row.forEach(cell => {
+      const td = document.createElement('td');
+      td.textContent = cell;
+      newRow.appendChild(td);
+    });
+    table.appendChild(newRow);
+  }
+
+  function clearFields() {
+    document.getElementById('zakazka').innerText = '';
+    document.getElementById('koupelna').innerText = '';
+    document.getElementById('typ').innerText = '';
+    document.getElementById('lr').innerText = '';
+    document.getElementById('ocrTextOutput').value = '';
+  }
+
+  window.onload = () => {
+    const saved = localStorage.getItem('userEmail');
+    if (saved) {
+      document.getElementById('loginContainer').classList.add('hidden');
+      document.getElementById('sectionContainer').classList.remove('hidden');
+    } else {
+      document.getElementById('loginContainer').classList.remove('hidden');
+    }
+  };
+</script>
   <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbx0bvlHj5QmABmkIDgrdG-Qlmiq_ziOHL0f1X7D1h7_1MnApR0qBoPMlpV05faVwOKqnw/exec';
 
