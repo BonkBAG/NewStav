@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -170,7 +169,21 @@
       reader.readAsDataURL(file);
     }
 
+    function cleanText(text) {
+      return text
+        .replace(/[|]/g, '1')
+        .replace(/[Oo]/g, '0')
+        .replace(/[“”]/g, '"')
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
     function parseText(text) {
+      text = cleanText(text);
+      console.log("Очищений текст:\n", text);
+
       const zakazkaMatch = text.match(/72\s?080\s?\d{3}/);             
       const koupelnaMatch = text.match(/\/\s?(\d{3})|(\b\d{3}\b)/);     
       const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i) || text.match(/\b(\d{1,2}\.\d+[A-Z]?)\b/); 
@@ -178,7 +191,7 @@
 
       const zakazka = zakazkaMatch ? zakazkaMatch[0].replace(/\s+/g, ' ') : '';
       const koupelna = koupelnaMatch ? (koupelnaMatch[1] || koupelnaMatch[2]) : '';
-      const typ = typMatch ? typMatch[1] : '';
+      const typ = typMatch ? typMatch[1].replace(/[^A-Z0-9.]/gi, '') : '';
       const lr = lrMatch ? lrMatch[1].toUpperCase() : '';
 
       document.getElementById('zakazka').innerText = zakazka;
@@ -210,7 +223,7 @@
       .then(res => res.json())
       .then(() => {
         alert("Успішно збережено!");
-        addRowToTable(row); // додати в HTML-таблицю
+        addRowToTable(row);
       })
       .catch(() => alert("Помилка під час збереження"));
     }
