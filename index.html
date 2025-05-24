@@ -21,7 +21,6 @@
       margin: 20px auto;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     h2 {
       text-align: center;
@@ -66,34 +65,13 @@
       background-color: rgba(255, 255, 255, 0.1);
     }
     .marked {
-      background-color: #009900 !important;
-      color: #fff !important;
-    }
-    .mark-btn {
-      background-color: #ccc;
-      color: #000;
-      border-radius: 6px;
-      padding: 5px 10px;
-      cursor: pointer;
-      border: none;
-    }
-    @media screen and (max-width: 480px) {
-      .container {
-        margin: 10px;
-        padding: 15px;
-      }
-      input[type="email"], button {
-        font-size: 14px;
-        padding: 10px;
-      }
-      th, td {
-        font-size: 12px;
-        padding: 6px;
-      }
+      background-color: green !important;
+      color: white !important;
     }
   </style>
-</head><body>
-  <div class="container hidden" id="loginContainer">
+</head>
+<body>
+  <div class="container" id="loginContainer">
     <h2>Skener protokolů</h2>
     <input type="email" id="email" placeholder="Zadejte svůj email" />
     <button onclick="login()">Přihlásit se</button>
@@ -111,172 +89,143 @@
     <button onclick="scanPhoto()">Skenovat</button>
     <button onclick="goBack()">Zpět</button>
     <input type="file" accept="image/*" capture="environment" id="photoInput" style="display:none" onchange="handleImage(this.files)" />
-    
     <div id="scanResult">
       <p><strong>Číslo zakázky:</strong> <span id="zakazka"></span></p>
       <p><strong>Číslo koupelny:</strong> <span id="koupelna"></span></p>
       <p><strong>Typ:</strong> <span id="typ"></span></p>
-      <p><strong>L/R:</strong> <span id="lr"></span></p>
     </div>
-    
     <button onclick="saveToSheet()">Uložit</button>
-
+    <button onclick="clearFields()">Vymazat</button>
     <table id="dataTable">
       <thead>
         <tr>
           <th>Zakázka</th>
           <th>Koupelna</th>
           <th>Typ</th>
-          <th>L/R</th>
           <th>Datum</th>
           <th>Status</th>
+          <th>Označit</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
 
+  <script>
+    const scriptURL = 'ВАШ_СКРИПТ_URL';
 
-  <canvas id="imageCanvas" style="display:none;"></canvas><script>
-  const scriptURL = 'ВАША_АДРЕСА_GOOGLE_APPS_SCRIPT';
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      if (email) {
+        localStorage.setItem('userEmail', email);
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
+      }
+    }
 
-  function login() {
-    const email = document.getElementById('email').value.trim();
-    if (email) {
-      localStorage.setItem('userEmail', email);
-      document.getElementById('loginContainer').classList.add('hidden');
+    function selectSection(name) {
+      document.getElementById('sectionContainer').classList.add('hidden');
+      document.getElementById('appContainer').classList.remove('hidden');
+      document.getElementById('sectionName').innerText = name;
+    }
+
+    function goBack() {
+      document.getElementById('appContainer').classList.add('hidden');
       document.getElementById('sectionContainer').classList.remove('hidden');
     }
-  }
 
-  function selectSection(name) {
-    document.getElementById('sectionContainer').classList.add('hidden');
-    document.getElementById('appContainer').classList.remove('hidden');
-    document.getElementById('sectionName').innerText = name;
-  }
+    function scanPhoto() {
+      document.getElementById('photoInput').click();
+    }
 
-  function goBack() {
-    document.getElementById('appContainer').classList.add('hidden');
-    document.getElementById('sectionContainer').classList.remove('hidden');
-  }
-
-  function scanPhoto() {
-    document.getElementById('photoInput').click();
-  }
-
-  function handleImage(files) {
-    if (!files.length) return;
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      const img = new Image();
-      img.onload = function () {
-        const canvas = document.getElementById('imageCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // Ч/б фільтр із контрастом
-        for (let i = 0; i < data.length; i += 4) {
-          const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-          const val = avg > 140 ? 255 : 0;
-          data[i] = data[i+1] = data[i+2] = val;
-        }
-        ctx.putImageData(imageData, 0, 0);
-
-        const processedImage = canvas.toDataURL('image/png');
-
-        Tesseract.recognize(processedImage, 'ces')
+    function handleImage(files) {
+      if (!files.length) return;
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const imageData = event.target.result;
+        Tesseract.recognize(imageData, 'ces')
           .then(({ data: { text } }) => {
             parseText(text);
           })
           .catch(error => alert("OCR Error: " + error.message));
       };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function parseText(text) {
-    const zakazkaMatch = text.match(/72\s?0[80O]{2}\s?(\d{3})/);
-    const koupelnaMatch = text.match(/\/\s?(\d{3})/);
-    const typMatch = text.match(/Typ[:\s]*([A-Z0-9.,-]+)/i);
-    const lrMatch = text.match(/\b([LR])\b/i);
-
-    const zakazka = zakazkaMatch ? `72 080 ${zakazkaMatch[1]}` : '';
-    const koupelna = koupelnaMatch ? koupelnaMatch[1] : '';
-    const typ = typMatch ? typMatch[1] : '';
-    const lr = lrMatch ? lrMatch[1].toUpperCase() : '';
-
-    document.getElementById('zakazka').innerText = zakazka;
-    document.getElementById('koupelna').innerText = koupelna;
-    document.getElementById('typ').innerText = typ;
-    document.getElementById('lr').innerText = lr;
-  }
-
-  function saveToSheet() {
-    const zakazka = document.getElementById('zakazka').innerText;
-    const koupelna = document.getElementById('koupelna').innerText;
-    const typ = document.getElementById('typ').innerText;
-    const lr = document.getElementById('lr').innerText;
-    const email = localStorage.getItem('userEmail');
-    const datum = new Date().toLocaleDateString();
-
-    if (!zakazka || !koupelna || !typ || !lr) {
-      alert("Заповніть усі поля перед збереженням!");
-      return;
+      reader.readAsDataURL(file);
     }
 
-    const row = [zakazka, koupelna, typ, lr, datum, ''];
-    fetch(scriptURL, {
-      method: 'POST',
-      body: JSON.stringify({ email, row }),
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(res => res.json())
-    .then(() => {
-      alert("Успішно збережено!");
-      addRowToTable(row);
-    })
-    .catch(() => alert("Помилка під час збереження"));
-  }
-
-  function addRowToTable(row) {
-    const tbody = document.querySelector('#dataTable tbody');
-    const tr = document.createElement('tr');
-    row.forEach((cell, i) => {
-      const td = document.createElement('td');
-      td.innerText = cell;
-      tr.appendChild(td);
-    });
-
-    const statusTd = document.createElement('td');
-    const markBtn = document.createElement('button');
-    markBtn.className = 'mark-btn';
-    markBtn.innerText = 'Відмітити';
-    markBtn.onclick = function () {
-      markBtn.innerText = 'Відмічена';
-      markBtn.classList.add('marked');
-    };
-    statusTd.appendChild(markBtn);
-    tr.appendChild(statusTd);
-
-    tbody.appendChild(tr);
-  }
-
-  window.onload = () => {
-    const saved = localStorage.getItem('userEmail');
-    if (saved) {
-      document.getElementById('loginContainer').classList.add('hidden');
-      document.getElementById('sectionContainer').classList.remove('hidden');
-    } else {
-      document.getElementById('loginContainer').classList.remove('hidden');
+    function parseText(text) {
+      text = text.replace(/\s{2,}/g, ' ').replace(/\n/g, ' ');
+      const zakazkaMatch = text.match(/72080\s?\d{3}/);
+      const zakazka = zakazkaMatch ? zakazkaMatch[0].replace(/\s+/g, '') : '';
+      const allNumbers = text.match(/\d{1,4}/g) || [];
+      const koupelna = allNumbers.length ? Math.max(...allNumbers.map(n => parseInt(n))) : '';
+      const typMatch = text.match(/Typ[:\s]*([0-9]{1,2}[.,]?[0-9]{0,2}[A-Z])/i)
+        || text.match(/([0-9]{1,2}[.,]?[0-9]{0,2}[A-Z])/i);
+      const typ = typMatch ? typMatch[1].replace(',', '.').toUpperCase() : '';
+      document.getElementById('zakazka').innerText = zakazka;
+      document.getElementById('koupelna').innerText = koupelna;
+      document.getElementById('typ').innerText = typ;
     }
-  };
-</script>
+
+    function saveToSheet() {
+      const zakazka = document.getElementById('zakazka').innerText;
+      const koupelna = document.getElementById('koupelna').innerText;
+      const typ = document.getElementById('typ').innerText;
+      const email = localStorage.getItem('userEmail');
+      const datum = new Date().toLocaleDateString();
+
+      if (!zakazka || !koupelna || !typ) {
+        alert("Заповніть усі поля перед збереженням!");
+        return;
+      }
+
+      const row = [zakazka, koupelna, typ, datum, '', ''];
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify({ email, row }),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.json())
+      .then(() => addRowToTable(row))
+      .catch(() => alert("Помилка під час збереження"));
+    }
+
+    function addRowToTable(row) {
+      const tbody = document.querySelector("#dataTable tbody");
+      const tr = document.createElement("tr");
+      row.forEach(cell => {
+        const td = document.createElement("td");
+        td.innerText = cell;
+        tr.appendChild(td);
+      });
+      const tdBtn = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.textContent = "Označit";
+      btn.onclick = () => {
+        btn.textContent = "Označeno";
+        btn.classList.add("marked");
+        btn.disabled = true;
+      };
+      tdBtn.appendChild(btn);
+      tr.appendChild(tdBtn);
+      tbody.appendChild(tr);
+    }
+
+    function clearFields() {
+      document.getElementById('zakazka').innerText = '';
+      document.getElementById('koupelna').innerText = '';
+      document.getElementById('typ').innerText = '';
+    }
+
+    window.onload = () => {
+      const saved = localStorage.getItem('userEmail');
+      if (saved) {
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('loginContainer').classList.remove('hidden');
+      }
+    };
+  </script>
 </body>
 </html>
