@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Skener protokolů</title>
   <style>
     body {
@@ -15,50 +15,50 @@
       color: #fff;
     }
     .container {
-      background-color: rgba(0, 0, 0, 0.65);
+      background-color: rgba(0, 0, 0, 0.7);
       max-width: 420px;
-      margin: 20px auto;
+      margin: 30px auto;
       padding: 20px;
       border-radius: 12px;
     }
     h2 {
       text-align: center;
       color: #00d9ff;
-      margin-bottom: 20px;
     }
     input, button {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      font-size: 16px;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
       border: none;
+      font-size: 16px;
     }
     input {
-      background-color: #222;
+      background-color: #333;
       color: #fff;
     }
     button {
       background-color: #00aaff;
-      color: white;
+      color: #fff;
       cursor: pointer;
     }
     button:hover {
-      background-color: #008fcc;
+      background-color: #0077cc;
+    }
+    .hidden {
+      display: none;
     }
     table {
       width: 100%;
       margin-top: 15px;
       border-collapse: collapse;
+      background-color: rgba(255,255,255,0.1);
     }
     th, td {
-      padding: 10px;
-      border: 1px solid #555;
-      font-size: 14px;
+      padding: 8px;
       text-align: center;
-    }
-    th {
-      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid #444;
+      color: #fff;
     }
     .marked {
       background-color: green !important;
@@ -67,15 +67,28 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container" id="loginContainer">
     <h2>Skener protokolů</h2>
-    <input type="email" id="email" placeholder="Zadejte svůj email" />
-    <input type="text" id="zakazka" placeholder="Číslo zakázky" />
-    <input type="text" id="koupelna" placeholder="Číslo koupelny" />
-    <input type="text" id="typ" placeholder="Typ (např. 2.1L)" />
+    <input type="email" id="email" placeholder="Zadejte svůj email">
+    <button onclick="login()">Přihlásit se</button>
+  </div>
+
+  <div class="container hidden" id="sectionContainer">
+    <h2>Vyberte úsek:</h2>
+    <button onclick="selectSection('Obkladačů')">Obkladačů</button>
+    <button onclick="selectSection('Silikonování')">Silikonování</button>
+    <button onclick="selectSection('Spárování')">Spárování</button>
+  </div>
+
+  <div class="container hidden" id="formContainer">
+    <h2>Úsek: <span id="sectionName"></span></h2>
+    <button onclick="goBack()">Zpět</button>
+    <input type="text" id="zakazka" placeholder="Číslo zakázky">
+    <input type="text" id="koupelna" placeholder="Číslo koupelny">
+    <input type="text" id="typ" placeholder="Typ (např. 2.1L)">
     <button onclick="saveToSheet()">Uložit</button>
 
-    <table id="dataTable">
+    <table>
       <thead>
         <tr>
           <th>Zakázka</th>
@@ -86,62 +99,89 @@
           <th>Označit</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="dataTableBody"></tbody>
     </table>
   </div>
 
-<script>
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbxux9H2hbVfzSt9L0fkOTUzibskG7eTFETHILomGpPVMm2XKFR5i66VzPZdsK6vGA/exec';
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxux9H2hbVfzSt9L0fkOTUzibskG7eTFETHILomGpPVMm2XKFR5i66VzPZdsK6vGA/exec';
 
-  function saveToSheet() {
-    const email = document.getElementById('email').value.trim();
-    const zakazka = document.getElementById('zakazka').value.trim();
-    const koupelna = document.getElementById('koupelna').value.trim();
-    const typ = document.getElementById('typ').value.trim();
-    const datum = new Date().toLocaleDateString();
-
-    if (!email || !zakazka || !koupelna || !typ) {
-      alert("Vyplňte prosím všechna pole.");
-      return;
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      if (email) {
+        localStorage.setItem('userEmail', email);
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
+      }
     }
 
-    const row = [zakazka, koupelna, typ, datum, '', ''];
+    function selectSection(name) {
+      document.getElementById('sectionName').innerText = name;
+      document.getElementById('sectionContainer').classList.add('hidden');
+      document.getElementById('formContainer').classList.remove('hidden');
+    }
 
-    fetch(scriptURL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, row })
-    })
-    .then(res => res.json())
-    .then(() => {
-      addRowToTable(row);
-      document.getElementById('zakazka').value = '';
-      document.getElementById('koupelna').value = '';
-      document.getElementById('typ').value = '';
-    })
-    .catch(() => alert("Chyba při ukládání dat."));
-  }
+    function goBack() {
+      document.getElementById('formContainer').classList.add('hidden');
+      document.getElementById('sectionContainer').classList.remove('hidden');
+    }
 
-  function addRowToTable(row) {
-    const tbody = document.querySelector("#dataTable tbody");
-    const tr = document.createElement("tr");
-    row.forEach(cell => {
-      const td = document.createElement("td");
-      td.innerText = cell;
-      tr.appendChild(td);
-    });
-    const tdBtn = document.createElement("td");
-    const btn = document.createElement("button");
-    btn.textContent = "Označit";
-    btn.onclick = () => {
-      btn.textContent = "Označeno";
-      btn.classList.add("marked");
-      btn.disabled = true;
+    function saveToSheet() {
+      const email = localStorage.getItem('userEmail');
+      const zakazka = document.getElementById('zakazka').value.trim();
+      const koupelna = document.getElementById('koupelna').value.trim();
+      const typ = document.getElementById('typ').value.trim();
+      const datum = new Date().toLocaleDateString();
+
+      if (!zakazka || !koupelna || !typ) {
+        alert("Vyplňte prosím všechna pole.");
+        return;
+      }
+
+      const row = [zakazka, koupelna, typ, datum, '', ''];
+      fetch(scriptURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, row })
+      })
+      .then(res => res.json())
+      .then(() => {
+        addRowToTable(row);
+        document.getElementById('zakazka').value = '';
+        document.getElementById('koupelna').value = '';
+        document.getElementById('typ').value = '';
+      })
+      .catch(() => alert("Chyba při ukládání dat."));
+    }
+
+    function addRowToTable(row) {
+      const tbody = document.getElementById('dataTableBody');
+      const tr = document.createElement('tr');
+      row.forEach(cell => {
+        const td = document.createElement('td');
+        td.innerText = cell;
+        tr.appendChild(td);
+      });
+      const btnTd = document.createElement('td');
+      const btn = document.createElement('button');
+      btn.innerText = "Označit";
+      btn.onclick = () => {
+        btn.innerText = "Označeno";
+        btn.classList.add('marked');
+        btn.disabled = true;
+      };
+      btnTd.appendChild(btn);
+      tr.appendChild(btnTd);
+      tbody.appendChild(tr);
+    }
+
+    window.onload = () => {
+      const savedEmail = localStorage.getItem('userEmail');
+      if (savedEmail) {
+        document.getElementById('loginContainer').classList.add('hidden');
+        document.getElementById('sectionContainer').classList.remove('hidden');
+      }
     };
-    tdBtn.appendChild(btn);
-    tr.appendChild(tdBtn);
-    tbody.appendChild(tr);
-  }
-</script>
+  </script>
 </body>
 </html>
