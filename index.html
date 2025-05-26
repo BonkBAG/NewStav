@@ -161,11 +161,23 @@
     img.onload = async () => {
       const canvas = document.getElementById('mainCanvas');
       const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      const zakazka = await ocrFromRegion(ctx, 1400, 380, 600, 100);
-      const koupelna = await ocrFromRegion(ctx, 2000, 380, 200, 100);
-      const typ = await ocrFromRegion(ctx, 420, 950, 400, 120);
+      // Чорно-біле перетворення (порогова фільтрація)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        const bw = avg > 180 ? 255 : 0;
+        data[i] = data[i+1] = data[i+2] = bw;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      // OCR по шаблонним зонам
+      const zakazka = await ocrFromRegion(ctx, 2600, 450, 600, 100);
+      const koupelna = await ocrFromRegion(ctx, 3250, 450, 220, 100);
+      const typ = await ocrFromRegion(ctx, 480, 1600, 380, 120);
 
       document.getElementById('zakazka').innerText = zakazka;
       document.getElementById('koupelna').innerText = koupelna;
