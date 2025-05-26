@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Skener protokolů</title>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
   <style>
     body {
       background-image: url('background.jpg');
@@ -27,7 +26,7 @@
       color: #00d9ff;
       margin-bottom: 20px;
     }
-    input[type="email"], button {
+    input, button {
       width: 100%;
       padding: 12px;
       margin-bottom: 10px;
@@ -35,7 +34,7 @@
       font-size: 16px;
       border: none;
     }
-    input[type="email"] {
+    input {
       background-color: #222;
       color: #fff;
     }
@@ -68,8 +67,8 @@
       background-color: green !important;
       color: white !important;
     }
-    canvas {
-      display: none;
+    .delete-button {
+      background-color: #cc0000;
     }
   </style>
 </head>
@@ -89,16 +88,14 @@
 
   <div class="container hidden" id="appContainer">
     <h2>Úsek: <span id="sectionName"></span></h2>
-    <button onclick="scanPhoto()">Skenovat</button>
     <button onclick="goBack()">Zpět</button>
-    <input type="file" accept="image/*" capture="environment" id="photoInput" style="display:none" onchange="handleImage(this.files)" />
-    <canvas id="mainCanvas" width="4608" height="3456"></canvas>
-    <div id="scanResult">
-      <p><strong>Číslo zakázky:</strong> <span id="zakazka"></span></p>
-      <p><strong>Číslo koupelny:</strong> <span id="koupelna"></span></p>
-      <p><strong>Typ:</strong> <span id="typ"></span></p>
-    </div>
+
+    <input type="text" id="zakazka" placeholder="Číslo zakázky" />
+    <input type="text" id="koupelna" placeholder="Číslo koupelny" />
+    <input type="text" id="typ" placeholder="Typ (např. 2.1L)" />
+    
     <button onclick="saveToSheet()">Uložit</button>
+
     <table id="dataTable">
       <thead>
         <tr>
@@ -108,6 +105,7 @@
           <th>Datum</th>
           <th>Status</th>
           <th>Označit</th>
+          <th>Smazat</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -115,7 +113,7 @@
   </div>
 
 <script>
-  const scriptURL = 'ВАШ_СКРИПТ_URL';
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbwqZapFcbGN7yriwQvd_j-jFF6U0oZQfm0W3X_8fIZfny7hO6f1hJhVE-8l5wcWnCdZeQ/exec';
 
   function login() {
     const email = document.getElementById('email').value.trim();
@@ -137,64 +135,15 @@
     document.getElementById('sectionContainer').classList.remove('hidden');
   }
 
-  function scanPhoto() {
-    document.getElementById('photoInput').click();
-  }
-
-  async function ocrFromRegion(ctx, x, y, w, h) {
-    const region = ctx.getImageData(x, y, w, h);
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = w;
-    tempCanvas.height = h;
-    tempCanvas.getContext('2d').putImageData(region, 0, 0);
-    const dataUrl = tempCanvas.toDataURL('image/png');
-    const result = await Tesseract.recognize(dataUrl, 'ces', {
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./() '
-    });
-    return result.data.text.trim();
-  }
-
-  function handleImage(files) {
-    if (!files.length) return;
-    const file = files[0];
-    const img = new Image();
-    img.onload = async () => {
-      const canvas = document.getElementById('mainCanvas');
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Чорно-біле перетворення (порогова фільтрація)
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-        const bw = avg > 180 ? 255 : 0;
-        data[i] = data[i+1] = data[i+2] = bw;
-      }
-      ctx.putImageData(imageData, 0, 0);
-
-      // OCR по шаблонним зонам
-      const zakazka = await ocrFromRegion(ctx, 2600, 450, 600, 100);
-      const koupelna = await ocrFromRegion(ctx, 3250, 450, 220, 100);
-      const typ = await ocrFromRegion(ctx, 480, 1600, 380, 120);
-
-      document.getElementById('zakazka').innerText = zakazka;
-      document.getElementById('koupelna').innerText = koupelna;
-      document.getElementById('typ').innerText = typ;
-    };
-    img.src = URL.createObjectURL(file);
-  }
-
   function saveToSheet() {
-    const zakazka = document.getElementById('zakazka').innerText;
-    const koupelna = document.getElementById('koupelna').innerText;
-    const typ = document.getElementById('typ').innerText;
+    const zakazka = document.getElementById('zakazka').value.trim();
+    const koupelna = document.getElementById('koupelna').value.trim();
+    const typ = document.getElementById('typ').value.trim();
     const email = localStorage.getItem('userEmail');
     const datum = new Date().toLocaleDateString();
 
     if (!zakazka || !koupelna || !typ) {
-      alert("Заповніть усі поля перед збереженням!");
+      alert("Vyplňte prosím všechna pole!");
       return;
     }
 
@@ -206,27 +155,42 @@
     })
     .then(res => res.json())
     .then(() => addRowToTable(row))
-    .catch(() => alert("Помилка під час збереження"));
+    .catch(() => alert("Chyba při ukládání dat"));
   }
 
   function addRowToTable(row) {
     const tbody = document.querySelector("#dataTable tbody");
     const tr = document.createElement("tr");
+
     row.forEach(cell => {
       const td = document.createElement("td");
       td.innerText = cell;
       tr.appendChild(td);
     });
-    const tdBtn = document.createElement("td");
-    const btn = document.createElement("button");
-    btn.textContent = "Označit";
-    btn.onclick = () => {
-      btn.textContent = "Označeno";
-      btn.classList.add("marked");
-      btn.disabled = true;
+
+    // KNOFLÍK "Označit"
+    const tdMark = document.createElement("td");
+    const btnMark = document.createElement("button");
+    btnMark.textContent = "Označit";
+    btnMark.onclick = () => {
+      btnMark.textContent = "Označeno";
+      btnMark.classList.add("marked");
+      btnMark.disabled = true;
     };
-    tdBtn.appendChild(btn);
-    tr.appendChild(tdBtn);
+    tdMark.appendChild(btnMark);
+    tr.appendChild(tdMark);
+
+    // KNOFLÍK "Smazat"
+    const tdDelete = document.createElement("td");
+    const btnDelete = document.createElement("button");
+    btnDelete.textContent = "Smazat";
+    btnDelete.className = "delete-button";
+    btnDelete.onclick = () => {
+      tr.remove();
+    };
+    tdDelete.appendChild(btnDelete);
+    tr.appendChild(tdDelete);
+
     tbody.appendChild(tr);
   }
 
