@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -104,10 +105,13 @@
   </div>
 
   <script>
+    let currentUser = "";
+
     function login() {
       const email = document.getElementById('email').value.trim();
       if (email) {
         localStorage.setItem('userEmail', email);
+        currentUser = email;
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('sectionContainer').classList.remove('hidden');
       }
@@ -117,11 +121,16 @@
       document.getElementById('sectionName').innerText = name;
       document.getElementById('sectionContainer').classList.add('hidden');
       document.getElementById('formContainer').classList.remove('hidden');
+      loadTableFromStorage();
     }
 
     function goBack() {
       document.getElementById('formContainer').classList.add('hidden');
       document.getElementById('sectionContainer').classList.remove('hidden');
+    }
+
+    function getStorageKey() {
+      return "data_" + currentUser;
     }
 
     function saveToLocal() {
@@ -136,12 +145,27 @@
       }
 
       const row = [zakazka, koupelna, typ, datum, '', ''];
+
+      let data = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
+      data.push(row);
+      localStorage.setItem(getStorageKey(), JSON.stringify(data));
+
       addRowToTable(row);
 
       // Очистити поля
       document.getElementById('zakazka').value = '';
       document.getElementById('koupelna').value = '';
       document.getElementById('typ').value = '';
+    }
+
+    function loadTableFromStorage() {
+      const tbody = document.getElementById('dataTableBody');
+      tbody.innerHTML = ""; // Очистити перед завантаженням
+
+      const data = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
+      data.forEach(row => {
+        addRowToTable(row);
+      });
     }
 
     function addRowToTable(row) {
@@ -170,6 +194,7 @@
     window.onload = () => {
       const savedEmail = localStorage.getItem('userEmail');
       if (savedEmail) {
+        currentUser = savedEmail;
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('sectionContainer').classList.remove('hidden');
       }
