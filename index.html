@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Skener protokolů</title>
   <style>
     body {
@@ -21,10 +20,6 @@
       margin: 30px auto;
       padding: 20px;
       border-radius: 12px;
-    }
-    h2 {
-      text-align: center;
-      color: #00d9ff;
     }
     input, button {
       width: 100%;
@@ -72,24 +67,21 @@
 </head>
 <body>
   <div class="container" id="loginContainer">
-    <h2>Skener protokolů</h2>
-    <input type="email" id="email" placeholder="Zadejte svůj email">
+    <input type="email" id="email" placeholder="Zadejte svůj email" />
     <button onclick="login()">Přihlásit se</button>
   </div>
 
   <div class="container hidden" id="sectionContainer">
-    <h2>Vyberte úsek:</h2>
     <button onclick="selectSection('Ploškování')">Ploškování</button>
     <button onclick="selectSection('Silikonování')">Silikonování</button>
     <button onclick="selectSection('Spárování')">Spárování</button>
   </div>
 
   <div class="container hidden" id="formContainer">
-    <h2>Úsek: <span id="sectionName"></span></h2>
     <button onclick="goBack()">Zpět</button>
-    <input type="text" id="zakazka" placeholder="Číslo zakázky">
-    <input type="text" id="koupelna" placeholder="Číslo koupelny">
-    <input type="text" id="typ" placeholder="Typ (např. 2.1L)">
+    <input type="text" id="zakazka" placeholder="Číslo zakázky" />
+    <input type="text" id="koupelna" placeholder="Číslo koupelny" />
+    <input type="text" id="typ" placeholder="Typ (např. 2.1L)" />
     <button onclick="saveToLocal()">Uložit</button>
 
     <div class="table-wrapper">
@@ -101,6 +93,7 @@
             <th>Typ</th>
             <th>Datum</th>
             <th>Ozn.</th>
+            <th>Smazat</th>
           </tr>
         </thead>
         <tbody id="dataTableBody"></tbody>
@@ -113,26 +106,25 @@
     let currentSection = "";
 
     function login() {
-      const email = document.getElementById('email').value.trim();
+      const email = document.getElementById("email").value.trim();
       if (email) {
-        localStorage.setItem('userEmail', email);
+        localStorage.setItem("userEmail", email);
         currentUser = email;
-        document.getElementById('loginContainer').classList.add('hidden');
-        document.getElementById('sectionContainer').classList.remove('hidden');
+        document.getElementById("loginContainer").classList.add("hidden");
+        document.getElementById("sectionContainer").classList.remove("hidden");
       }
     }
 
     function selectSection(name) {
       currentSection = name;
-      document.getElementById('sectionName').innerText = name;
-      document.getElementById('sectionContainer').classList.add('hidden');
-      document.getElementById('formContainer').classList.remove('hidden');
+      document.getElementById("sectionContainer").classList.add("hidden");
+      document.getElementById("formContainer").classList.remove("hidden");
       loadTableFromStorage();
     }
 
     function goBack() {
-      document.getElementById('formContainer').classList.add('hidden');
-      document.getElementById('sectionContainer').classList.remove('hidden');
+      document.getElementById("formContainer").classList.add("hidden");
+      document.getElementById("sectionContainer").classList.remove("hidden");
     }
 
     function getStorageKey() {
@@ -140,9 +132,9 @@
     }
 
     function saveToLocal() {
-      const zakazka = document.getElementById('zakazka').value.trim();
-      const koupelna = document.getElementById('koupelna').value.trim();
-      const typ = document.getElementById('typ').value.trim();
+      const zakazka = document.getElementById("zakazka").value.trim();
+      const koupelna = document.getElementById("koupelna").value.trim();
+      const typ = document.getElementById("typ").value.trim();
       const datum = new Date().toLocaleDateString();
 
       if (!zakazka || !koupelna || !typ) {
@@ -150,7 +142,7 @@
         return;
       }
 
-      const row = [zakazka, koupelna, typ, datum, ''];
+      const row = [zakazka, koupelna, typ, datum, ""];
 
       let data = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
       data.push(row);
@@ -158,13 +150,13 @@
 
       addRowToTable(row);
 
-      document.getElementById('zakazka').value = '';
-      document.getElementById('koupelna').value = '';
-      document.getElementById('typ').value = '';
+      document.getElementById("zakazka").value = "";
+      document.getElementById("koupelna").value = "";
+      document.getElementById("typ").value = "";
     }
 
     function loadTableFromStorage() {
-      const tbody = document.getElementById('dataTableBody');
+      const tbody = document.getElementById("dataTableBody");
       tbody.innerHTML = "";
 
       const data = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
@@ -174,35 +166,50 @@
     }
 
     function addRowToTable(row) {
-      const tbody = document.getElementById('dataTableBody');
-      const tr = document.createElement('tr');
-      row.forEach((cell, index) => {
-        if (index < 4) {
-          const td = document.createElement('td');
-          td.innerText = cell;
-          tr.appendChild(td);
-        }
-      });
+      const tbody = document.getElementById("dataTableBody");
+      const tr = document.createElement("tr");
 
-      const btnTd = document.createElement('td');
-      const btn = document.createElement('button');
-      btn.innerText = "Označit";
-      btn.onclick = () => {
-        btn.innerText = "Označeno";
-        btn.classList.add('marked');
-        btn.disabled = true;
+      for (let i = 0; i < 4; i++) {
+        const td = document.createElement("td");
+        td.innerText = row[i];
+        tr.appendChild(td);
+      }
+
+      const markTd = document.createElement("td");
+      const markBtn = document.createElement("button");
+      markBtn.innerText = "Označit";
+      markBtn.onclick = () => {
+        markBtn.innerText = "Označeno";
+        markBtn.classList.add("marked");
+        markBtn.disabled = true;
       };
-      btnTd.appendChild(btn);
-      tr.appendChild(btnTd);
+      markTd.appendChild(markBtn);
+      tr.appendChild(markTd);
+
+      const deleteTd = document.createElement("td");
+      const deleteBtn = document.createElement("button");
+      deleteBtn.innerText = "Smazat";
+      deleteBtn.onclick = () => {
+        tr.remove();
+        let data = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
+        const index = Array.from(tbody.children).indexOf(tr);
+        if (index > -1) {
+          data.splice(index, 1);
+          localStorage.setItem(getStorageKey(), JSON.stringify(data));
+        }
+      };
+      deleteTd.appendChild(deleteBtn);
+      tr.appendChild(deleteTd);
+
       tbody.appendChild(tr);
     }
 
     window.onload = () => {
-      const savedEmail = localStorage.getItem('userEmail');
+      const savedEmail = localStorage.getItem("userEmail");
       if (savedEmail) {
         currentUser = savedEmail;
-        document.getElementById('loginContainer').classList.add('hidden');
-        document.getElementById('sectionContainer').classList.remove('hidden');
+        document.getElementById("loginContainer").classList.add("hidden");
+        document.getElementById("sectionContainer").classList.remove("hidden");
       }
     };
   </script>
