@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -49,9 +48,13 @@
     .hidden {
       display: none;
     }
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
     table {
       width: 100%;
-      margin-top: 15px;
+      min-width: 600px;
       border-collapse: collapse;
       background-color: rgba(255,255,255,0.1);
     }
@@ -89,19 +92,21 @@
     <input type="text" id="typ" placeholder="Typ (např. 2.1L)">
     <button onclick="saveToLocal()">Uložit</button>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Zakázka</th>
-          <th>Koupelna</th>
-          <th>Typ</th>
-          <th>Datum</th>
-          <th>Status</th>
-          <th>Označit</th>
-        </tr>
-      </thead>
-      <tbody id="dataTableBody"></tbody>
-    </table>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Zakázka</th>
+            <th>Koupelna</th>
+            <th>Typ</th>
+            <th>Datum</th>
+            <th>Status</th>
+            <th>Označit</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+      </table>
+    </div>
   </div>
 
   <script>
@@ -160,7 +165,7 @@
 
     function loadTableFromStorage() {
       const tbody = document.getElementById('dataTableBody');
-      tbody.innerHTML = ""; // Очистити перед завантаженням
+      tbody.innerHTML = "";
 
       const data = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
       data.forEach(row => {
@@ -177,7 +182,6 @@
         tr.appendChild(td);
       });
 
-      // Кнопка "Označit"
       const btnTd = document.createElement('td');
       const btn = document.createElement('button');
       btn.innerText = "Označit";
